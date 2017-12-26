@@ -1,5 +1,6 @@
 package com.hebangdata;
 
+import com.hebangdata.utils.SerializableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,11 @@ import java.util.stream.Stream;
 public class Launcher {
 	private static final Logger log = LoggerFactory.getLogger("Launcher");
 
+	private static final String BIN_PATH = "assets/words.map";
+
 	public static void main(String[] args) throws IOException {
-		parseWords("assets/大词库20171225.txt", "assets/所有去重.grouped.txt", 3);
+		// 获得解析后的语料速查表
+		final Map<Character, Map<Character, AtomicInteger[]>> map = parseWords("assets/大词库20171225.txt", "assets/所有去重.grouped.txt", 3);
 	}
 
 	// 读取词库，构造词库首字母的有效 Set
@@ -104,6 +108,12 @@ public class Launcher {
 
 		log.info("读取语料库建模，产生了 {} 个有效首字符语料信息，耗时：{} 秒。", wordsNodeMap.size(), (end - begin) / 1000L);
 
+		availableInitial.clear();
+
 		return wordsNodeMap;
+	}
+
+	private static int[] query(final char initial, final char letter) {
+		return null;
 	}
 }
