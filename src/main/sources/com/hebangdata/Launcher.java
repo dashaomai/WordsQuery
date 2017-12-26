@@ -1,6 +1,5 @@
 package com.hebangdata;
 
-import com.hebangdata.utils.SerializableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
