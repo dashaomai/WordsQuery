@@ -3,7 +3,9 @@ package com.hebangdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -17,11 +19,36 @@ import java.util.stream.Stream;
 public class Launcher {
 	private static final Logger log = LoggerFactory.getLogger("Launcher");
 
-	private static final String BIN_PATH = "assets/words.map";
-
 	public static void main(String[] args) throws IOException {
 		// 获得解析后的语料速查表
 		final Map<Character, Map<Character, AtomicInteger[]>> map = parseWords("assets/大词库20171225.txt", "assets/所有去重.grouped.txt", 3);
+
+		// 循环读输入的查询串
+		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
+		String input;
+		do {
+			log.info("请输入要查询的二字词：");
+			input = inputStream.readLine();
+
+			if (input.equals("quit")) {
+				log.info("收到退出指令。");
+				break;
+			}
+			else {
+				final char[] bytes = input.toCharArray();
+				if (bytes.length > 1) {
+					final int[] result = query(map, bytes[0], bytes[1]);
+					if (null == result) {
+						log.warn("查询词：{} 没有结果。", input);
+					} else {
+						log.info("查询词：{} 的结果是：{}", input, result);
+					}
+				}
+			}
+		}
+		while (input != null);
+
+		log.info("感谢您的使用，再见！");
 	}
 
 	// 读取词库，构造词库首字母的有效 Set
@@ -112,7 +139,20 @@ public class Launcher {
 		return wordsNodeMap;
 	}
 
-	private static int[] query(final char initial, final char letter) {
-		return null;
+	private static int[] query(final Map<Character, Map<Character, AtomicInteger[]>> map, final char initial, final char letter) {
+		if (null == map) return null;
+
+		final Map<Character, AtomicInteger[]> wordsMap = map.get(initial);
+		if (null == wordsMap) return null;
+
+		final AtomicInteger[] wordsNode = wordsMap.get(letter);
+		if (null == wordsNode) return null;
+
+		final int[] result = new int[wordsNode.length];
+		for (int i = 0, m = result.length; i<m; i++) {
+			result[i] = wordsNode[i].get();
+		}
+
+		return result;
 	}
 }
