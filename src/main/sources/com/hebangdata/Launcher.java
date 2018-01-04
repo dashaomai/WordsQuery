@@ -1,17 +1,19 @@
 package com.hebangdata;
 
+import com.hebangdata.daos.Probability;
+import com.hebangdata.daos.ProbabilityMapper;
+import com.hebangdata.utils.MyBatiesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Char;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -22,6 +24,43 @@ public class Launcher {
 	public static void main(String[] args) throws IOException {
 		// 获得解析后的语料速查表
 		final Map<Character, Map<Character, AtomicInteger[]>> map = parseWords("assets/大词库20171225.txt", "assets/所有去重.grouped.txt", 3);
+
+		// 将语料速查表写入 MySQL 数据库
+		MyBatiesUtils.Execute(session -> {
+			// 首先清空表内原始数据
+			final ProbabilityMapper mapper = session.getMapper(ProbabilityMapper.class);
+			mapper.delete();
+			log.info("从原数据表中删除原先的数据");
+
+			// 遍历并插入数据
+			final Iterator<Map.Entry<Character, Map<Character, AtomicInteger[]>>> it0 = map.entrySet().iterator();
+			Map.Entry<Character, Map<Character, AtomicInteger[]>> entry0;
+			Map.Entry<Character, AtomicInteger[]> entry1;
+			while (it0.hasNext()) {
+				entry0 = it0.next();
+
+				final Character initial = entry0.getKey();
+				final Map<Character, AtomicInteger[]> map1 = entry0.getValue();
+
+				final Iterator<Map.Entry<Character, AtomicInteger[]>> it1 = map1.entrySet().iterator();
+				while (it1.hasNext()) {
+					entry1 = it1.next();
+
+					final Character letter = entry1.getKey();
+					final AtomicInteger[] probabilities = entry1.getValue();
+
+					final Probability probability = new Probability(
+							initial.toString(), letter.toString(),
+							new BigDecimal(probabilities[0].get()), new BigDecimal(probabilities[1].get()),
+							new BigDecimal(probabilities[2].get()), new BigDecimal(probabilities[3].get())
+					);
+
+					mapper.insert(probability);
+				}
+			}
+
+			return true;
+		});
 
 		// 循环读输入的查询串
 		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));

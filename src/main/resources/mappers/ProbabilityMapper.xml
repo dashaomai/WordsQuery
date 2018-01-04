@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hebangdata.daos.ProbabilityMapper">
+    <select id="find" resultType="com.hebangdata.daos.Probability">
+        select * from probability where `initial` = #{initial} and `letter` = #{letter}
+    </select>
+    
+    <insert id="insert" parameterType="com.hebangdata.daos.Probability">
+        insert into probability(`initial`, `letter`, `count_0`, `count_1`, `count_2`, `count_3`)
+        values(#{initial}, #{letter}, #{count_0}, #{count_1}, #{count_2}, #{count_3})
+    </insert>
+
+    <delete id="delete">
+        delete from probability;
+    </delete>
+</mapper>
