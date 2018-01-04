@@ -1,6 +1,7 @@
 package com.hebangdata.utils;
 
 import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -28,14 +29,18 @@ public class MyBatiesUtils {
     }
   }
 
+  public static <T> T Execute(final IMyBatiesExecution<T> execution) {
+    return Execute(execution, ExecutorType.SIMPLE);
+  }
+
   /**
    * 执行一个 MyBaties 操作
    * @param execution
    * @param <T>
    * @return
    */
-  public static <T> T Execute(final IMyBatiesExecution<T> execution) {
-    try (final SqlSession session = sqlSessionFactory.openSession()) {
+  public static <T> T Execute(final IMyBatiesExecution<T> execution, final ExecutorType execType) {
+    try (final SqlSession session = sqlSessionFactory.openSession(execType)) {
       final T result = execution.execute(session);
 
       session.commit();

@@ -3,9 +3,9 @@ package com.hebangdata;
 import com.hebangdata.daos.Probability;
 import com.hebangdata.daos.ProbabilityMapper;
 import com.hebangdata.utils.MyBatiesUtils;
+import org.apache.ibatis.session.ExecutorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Char;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class Launcher {
 			}
 
 			return true;
-		});
+		}, ExecutorType.BATCH);
 
 		// 循环读输入的查询串
 		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
