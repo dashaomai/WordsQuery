@@ -25,42 +25,66 @@ public class Launcher {
 		// 获得解析后的语料速查表
 		final Map<Character, Map<Character, AtomicInteger[]>> map = parseWords("assets/大词库20171225.txt", "assets/所有去重.grouped.txt", 3);
 
-		// 将语料速查表写入 MySQL 数据库
+		// 首先清空表内原始数据
 		MyBatiesUtils.Execute(session -> {
-			// 首先清空表内原始数据
 			final ProbabilityMapper mapper = session.getMapper(ProbabilityMapper.class);
 			mapper.delete();
 			log.info("从原数据表中删除原先的数据");
 
-			// 遍历并插入数据
-			final Iterator<Map.Entry<Character, Map<Character, AtomicInteger[]>>> it0 = map.entrySet().iterator();
-			Map.Entry<Character, Map<Character, AtomicInteger[]>> entry0;
-			Map.Entry<Character, AtomicInteger[]> entry1;
-			while (it0.hasNext()) {
-				entry0 = it0.next();
+			return true;
+		});
 
-				final Character initial = entry0.getKey();
-				final Map<Character, AtomicInteger[]> map1 = entry0.getValue();
+		// 将语料速查表写入 MySQL 数据库
+
+		// 遍历并插入数据
+		int gcCounter = 0;
+
+		final Iterator<Map.Entry<Character, Map<Character, AtomicInteger[]>>> it0 = map.entrySet().iterator();
+		Map.Entry<Character, Map<Character, AtomicInteger[]>> entry0;
+		while (it0.hasNext()) {
+			entry0 = it0.next();
+
+			final Character initial = entry0.getKey();
+			final Map<Character, AtomicInteger[]> map1 = entry0.getValue();
+
+			MyBatiesUtils.Execute(session -> {
+				final ProbabilityMapper mapper = session.getMapper(ProbabilityMapper.class);
 
 				final Iterator<Map.Entry<Character, AtomicInteger[]>> it1 = map1.entrySet().iterator();
+				Probability probability = new Probability(
+						initial, '\0',
+						0, 0,
+						0, 0
+				);
 				while (it1.hasNext()) {
-					entry1 = it1.next();
+					final Map.Entry<Character, AtomicInteger[]> entry1 = it1.next();
 
 					final Character letter = entry1.getKey();
 					final AtomicInteger[] probabilities = entry1.getValue();
 
-					final Probability probability = new Probability(
-							initial.toString(), letter.toString(),
-							new BigDecimal(probabilities[0].get()), new BigDecimal(probabilities[1].get()),
-							new BigDecimal(probabilities[2].get()), new BigDecimal(probabilities[3].get())
-					);
+					probability.letter = letter.toString();
+					probability.count_0 = new java.math.BigDecimal(probabilities[0].get());
+					probability.count_1 = new java.math.BigDecimal(probabilities[1].get());
+					probability.count_2 = new java.math.BigDecimal(probabilities[2].get());
+					probability.count_3 = new java.math.BigDecimal(probabilities[3].get());
 
 					mapper.insert(probability);
-				}
-			}
 
-			return true;
-		}, ExecutorType.BATCH);
+					it1.remove();
+				}
+
+				return true;
+			}, ExecutorType.BATCH);
+
+			it0.remove();
+
+			gcCounter ++;
+
+			if (gcCounter >= 100) {
+				gcCounter = 0;
+				System.gc();
+			}
+		}
 
 		// 循环读输入的查询串
 		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
